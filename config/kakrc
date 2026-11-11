@@ -9,7 +9,15 @@ require-module grep
 
 # Language servers and tools come from the pinned Nix closure.
 evaluate-commands %sh{ kak-lsp }
+alias global hover lsp-hover-buffer
 colorscheme ppy-dark
+# Show hover help/diagnostics when the text cursor rests in normal mode.
+# Keep the information box in the bottom-right, away from the code.
+lsp-auto-hover-enable
+set-option global lsp_hover_anchor false
+set-option global lsp_hover_max_info_lines 6
+set-option global lsp_hover_max_diagnostic_lines 3
+set-option -add global ui_options terminal_info_max_width=64
 remove-hooks global lsp-filetype-.*
 hook global BufSetOption filetype=python %{
     set-option buffer lsp_servers %{

@@ -40,6 +40,13 @@ Python uses Pyright; Nix uses nil; TOML uses Taplo. Completion and diagnostics
 are enabled for those filetypes. Format TOML with **Space l f**. Taplo can
 provide schema-aware completion and validation when a schema is available;
 configure it in `taplo.toml` or `.taplo.toml`. Pyright does not provide Python formatting.
+Hover help and diagnostics appear automatically when the cursor pauses in
+normal mode. Use `:hover` to open the full hover documentation in a buffer.
+The preview appears in the bottom-right information box, limited to 6 lines of
+documentation and 3 lines of diagnostics. Info boxes are capped at 64 columns;
+long lines can wrap, so the line limits are not a strict screen-height cap.
+Use `lsp-auto-hover-disable`
+in personal overrides to disable this behavior.
 Configure project virtual environments with `pyrightconfig.json` or
 `[tool.pyright]` in `pyproject.toml`. Polka bundles a baseline Python interpreter;
 your project's interpreter and dependencies still need project configuration.
