@@ -1,0 +1,81 @@
+# Comfort layer for polka. The ordinary `kak` command does not read this.
+add-highlighter global/polka-lines number-lines -hlcursor -separator ' '
+add-highlighter global/polka-matching show-matching -previous
+set-option global autoinfo command|onkey|normal
+set-option global scrolloff 3,3
+
+require-module menu
+require-module grep
+
+# Language servers and tools come from the pinned Nix closure.
+evaluate-commands %sh{ kak-lsp }
+colorscheme ppy-dark
+remove-hooks global lsp-filetype-.*
+hook global BufSetOption filetype=python %{
+    set-option buffer lsp_servers %{
+        [pyright]
+        command = "pyright-langserver"
+        args = ["--stdio"]
+        root_globs = ["pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "pyrightconfig.json", ".git"]
+        [pyright.settings.python.analysis]
+        diagnosticMode = "openFilesOnly"
+        typeCheckingMode = "basic"
+    }
+}
+hook global BufSetOption filetype=nix %{
+    set-option buffer lsp_servers %{
+        [nil]
+        root_globs = ["flake.nix", "shell.nix", "default.nix", ".git"]
+    }
+}
+hook global WinSetOption filetype=(python|nix) %{ lsp-enable-window }
+set-option global modelinefmt "POLKA %opt{lsp_modeline} %opt{modelinefmt}"
+map global user l ':enter-user-mode lsp<ret>' -docstring 'Language tools'
+map global goto d ':lsp-definition<ret>' -docstring 'Go to definition'
+map global goto r ':lsp-references<ret>' -docstring 'Find references'
+map global normal <c-p> ':polka-files<ret>' -docstring 'Find project file'
+
+# Ripgrep respects ignore files; Kakoune supplies the fuzzy matching.
+define-command polka-files -docstring 'Find a project file: type a partial name, Tab, Enter' %{
+    prompt -menu -shell-script-candidates %{
+        rg --files --hidden --glob '!.git' --glob '!result' --glob '!result/**'
+    } 'File: ' %{ edit %val{text} }
+}
+
+define-command polka-buffers -docstring 'Switch open buffers' %{
+    prompt -buffer-completion 'Buffer: ' %{ buffer %val{text} }
+}
+
+define-command polka-search -docstring 'Search files below the current directory' %{
+    prompt 'Search (regex): ' %{ grep -- %val{text} . }
+}
+set-option global grepcmd "rg --vimgrep --hidden --glob '!.git' --glob '!result' --glob '!result/**'"
+
+define-command polka-wrap -docstring 'Toggle soft wrapping in this window' %{
+    try %{ remove-highlighter window/polka-wrap } catch %{ add-highlighter window/polka-wrap wrap -word -indent }
+}
+define-command polka-help %{
+    edit %sh{ printf '%s/README.md' "$kak_config" }
+}
+define-command polka-menu -docstring 'Polka command menu' %{
+    menu 'Find file' polka-files 'Switch buffer' polka-buffers 'Search project' polka-search 'Go to definition' lsp-definition 'Hover help' lsp-hover 'Diagnostics' lsp-diagnostics 'Rename symbol' lsp-rename-prompt 'File symbols' lsp-document-symbol 'Save' write 'Toggle wrap' polka-wrap 'Personal settings' %{ edit %sh{ printf %s "$POLKA_USER_CONFIG" } } 'Polka guide' polka-help
+}
+
+# Space opens Kakoune's native user mode; descriptions appear automatically.
+map global user f ':polka-files<ret>' -docstring 'Find project file'
+map global user b ':polka-buffers<ret>' -docstring 'Switch buffer'
+map global user s ':polka-search<ret>' -docstring 'Search project'
+map global user w ':write<ret>' -docstring 'Save file'
+map global user t ':polka-wrap<ret>' -docstring 'Toggle soft wrap'
+map global user m ':polka-menu<ret>' -docstring 'Command menu'
+map global user h ':polka-help<ret>' -docstring 'Polka guide'
+map global user c ':edit %sh{ printf %s "$POLKA_USER_CONFIG" }<ret>' -docstring 'Personal settings'
+
+hook global KakBegin .* %{ echo 'polka · Space m: menu · Space h: guide' }
+
+# Personal overrides load last. Keep the bundled defaults reproducible.
+evaluate-commands %sh{
+    if [ -f "$POLKA_USER_CONFIG" ]; then
+        printf "source '%s'\n" "$(printf %s "$POLKA_USER_CONFIG" | sed "s/'/''/g")"
+    fi
+}
