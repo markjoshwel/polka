@@ -1,5 +1,5 @@
 {
-  description = "Polka: a personal Kakoune distribution with ppy colours and Python/Nix LSP";
+  description = "Polka: a personal Kakoune distribution with ppy colours and Python/Nix/TOML LSP";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -18,7 +18,7 @@
         pkgs.writeShellApplication {
           name = "polka";
           runtimeInputs = with pkgs; [
-            kakoune kakoune-lsp pyright nil python3
+            kakoune kakoune-lsp pyright nil taplo python3
             ripgrep git coreutils findutils gnused gnugrep
           ];
           text = ''
@@ -28,7 +28,7 @@
             exec ${pkgs.kakoune}/bin/kak "$@"
           '';
           meta = {
-            description = "Kakoune with ppy Dark, project navigation, and Python/Nix LSP";
+            description = "Kakoune with ppy Dark, project navigation, and Python/Nix/TOML LSP";
             mainProgram = "polka";
             platforms = systems;
           };

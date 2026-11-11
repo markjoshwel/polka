@@ -28,7 +28,14 @@ hook global BufSetOption filetype=nix %{
         root_globs = ["flake.nix", "shell.nix", "default.nix", ".git"]
     }
 }
-hook global WinSetOption filetype=(python|nix) %{ lsp-enable-window }
+hook global BufSetOption filetype=toml %{
+    set-option buffer lsp_servers %{
+        [taplo]
+        args = ["lsp", "stdio"]
+        root_globs = [".taplo.toml", "taplo.toml", "pyproject.toml", "Cargo.toml", ".git"]
+    }
+}
+hook global WinSetOption filetype=(python|nix|toml) %{ lsp-enable-window }
 set-option global modelinefmt "POLKA %opt{lsp_modeline} %opt{modelinefmt}"
 map global user l ':enter-user-mode lsp<ret>' -docstring 'Language tools'
 map global goto d ':lsp-definition<ret>' -docstring 'Go to definition'

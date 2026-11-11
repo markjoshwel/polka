@@ -1,7 +1,7 @@
 # Polka
 
 A personal, flake-based Kakoune distribution: ppy Dark colours, fuzzy project
-navigation, and Python/Nix language intelligence. The editor and all tools come
+navigation, and Python/Nix/TOML language intelligence. The editor and all tools come
 from one locked Nixpkgs revision. Ordinary `kak` uses its own configuration.
 
 ## Run
@@ -36,8 +36,10 @@ reinstall that profile entry when changing local defaults.
 - **Space w**: save. **Space t**: toggle soft wrapping.
 - **Space c**: edit personal overrides. **Space h**: this guide.
 
-Python uses Pyright; Nix uses nil. Semantic completion and diagnostics are
-enabled for those filetypes. Pyright does not provide Python formatting.
+Python uses Pyright; Nix uses nil; TOML uses Taplo. Completion and diagnostics
+are enabled for those filetypes. Format TOML with **Space l f**. Taplo can
+provide schema-aware completion and validation when a schema is available;
+configure it in `taplo.toml` or `.taplo.toml`. Pyright does not provide Python formatting.
 Configure project virtual environments with `pyrightconfig.json` or
 `[tool.pyright]` in `pyproject.toml`. Polka bundles a baseline Python interpreter;
 your project's interpreter and dependencies still need project configuration.
@@ -79,7 +81,8 @@ nix build
 ```
 
 `nix flake check` builds Polka and tests clean startup, file navigation,
-personal overrides, Python go-to-definition, and real Python/Nix diagnostics.
+personal overrides, Python go-to-definition, real Python/Nix/TOML diagnostics,
+and TOML formatting.
 
 ## Theme provenance
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the built distribution, including real Python/Nix diagnostics."""
+"""Exercise the built distribution, including real Python/Nix/TOML diagnostics."""
 import os
 from pathlib import Path
 import subprocess
@@ -18,8 +18,12 @@ with tempfile.TemporaryDirectory(prefix="polka-check-") as directory:
     root = Path(directory).resolve()
     python_file = root / "example.py"
     nix_file = root / "example.nix"
+    toml_file = root / "example.toml"
+    format_file = root / "format.toml"
     python_file.write_text('def greet(name: str) -> str:\n    return name\ncount: int = "wrong"\ngreet("world")\n')
     nix_file.write_text("{ value = missingName; }\n")
+    toml_file.write_text("value = [\n")
+    format_file.write_text("value=1\n")
     config = root / "config" / "polka"
     config.mkdir(parents=True)
     (config / "extra.kak").write_text("set-option global tabstop 7\n")
@@ -76,6 +80,14 @@ with tempfile.TemporaryDirectory(prefix="polka-check-") as directory:
         send("evaluate-commands -client client0 %{ polka-wrap; polka-wrap; "
              f"edit {quote(nix_file)} }}")
         wait_for(lambda v: v[1] == str(nix_file) and int(v[0]) >= 1, "Nix diagnostics")
+        send(f"evaluate-commands -client client0 %{{ edit {quote(toml_file)} }}")
+        wait_for(lambda v: v[1] == str(toml_file) and int(v[0]) >= 1, "TOML diagnostics")
+        send(f"evaluate-commands -client client0 %{{ edit {quote(format_file)}; lsp-formatting-sync; write }}")
+        deadline = time.monotonic() + 10
+        while format_file.read_text().rstrip("\n") != "value = 1" and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert format_file.read_text().rstrip("\n") == "value = 1", repr(format_file.read_text())
+        print("PASS: TOML formatting")
         # Validate the picker in the live client, and then inspect the selected file.
         send("evaluate-commands -client client0 %{ evaluate-commands -draft %{ "
              "polka-files; execute-keys example.py<ret>; "
